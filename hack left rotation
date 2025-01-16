@@ -1,0 +1,27 @@
+def leftRotation(a, d):
+
+    n = len(a)
+
+    d = d % n # Handle cases where d > n
+
+    rotated_array = a[d:] + a[:d]
+
+    return rotated_array
+
+
+
+# Reading input
+
+if __name__ == "__main__":
+
+    # Input processing
+
+    n, d = map(int, input().split())
+
+    a = list(map(int, input().split()))
+
+    result = leftRotation(a, d)
+
+    # Print the result as a space-separated string
+
+    print(' '.join(map(str, result)))
