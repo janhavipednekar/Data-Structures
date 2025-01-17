@@ -1,0 +1,73 @@
+class Node:
+    def __init__(self, info): 
+        self.info = info  
+        self.left = None  
+        self.right = None 
+        self.level = None 
+
+    def __str__(self):
+        return str(self.info) 
+
+class BinarySearchTree:
+    def __init__(self): 
+        self.root = None
+
+    def create(self, val):  
+        if self.root == None:
+            self.root = Node(val)
+        else:
+            current = self.root
+         
+            while True:
+                if val < current.info:
+                    if current.left:
+                        current = current.left
+                    else:
+                        current.left = Node(val)
+                        break
+                elif val > current.info:
+                    if current.right:
+                        current = current.right
+                    else:
+                        current.right = Node(val)
+                        break
+                else:
+                    break
+
+"""
+Node is defined as
+self.left (the left child of the node)
+self.right (the right child of the node)
+self.info (the value of the node)
+"""
+def topView(root):
+    #Write your code here
+    dst_hm = {}
+    frontier = [(root, 0)]
+    while frontier:
+        nxt = []
+        for v in frontier:
+            if v[1] not in dst_hm:
+                # print(v[0].info, end=' ')
+                dst_hm[v[1]] = (v[0])
+                
+            if v[0].left:
+                nxt.append((v[0].left, v[1]-1))
+            if v[0].right:
+                nxt.append((v[0].right, v[1]+1))
+        frontier = nxt
+    
+    for ele in sorted(dst_hm.keys()):
+        print(dst_hm[ele], end=' ')
+
+
+
+tree = BinarySearchTree()
+t = int(input())
+
+arr = list(map(int, input().split()))
+
+for i in range(t):
+    tree.create(arr[i])
+
+topView(tree.root)
