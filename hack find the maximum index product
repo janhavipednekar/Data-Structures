@@ -1,0 +1,43 @@
+#!/bin/python3
+
+import math
+import os
+import random
+import re
+import sys
+
+#
+# Complete the 'solve' function below.
+#
+# The function is expected to return an INTEGER.
+# The function accepts INTEGER_ARRAY arr as parameter.
+#
+
+def solve(arr):
+    # Write your code here
+    left = []
+    right = []
+    n = len(arr)
+    for i,e in enumerate(arr):
+        if i==0 or e>= arr[i-1]:
+            left.append(0)
+        else:
+            left.append(i)
+        if i== n-1 or e>=arr[i + 1]:
+            right.append(0)
+        else:
+            right.append(i+2)
+    return max([left[i]*right[i] for i in range(n)])
+
+if __name__ == '__main__':
+    fptr = open(os.environ['OUTPUT_PATH'], 'w')
+
+    arr_count = int(input().strip())
+
+    arr = list(map(int, input().rstrip().split()))
+
+    result = solve(arr)
+
+    fptr.write(str(result) + '\n')
+
+    fptr.close()
