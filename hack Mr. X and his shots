@@ -1,0 +1,71 @@
+#!/bin/python3
+
+import math
+import os
+import random
+import re
+import sys
+
+#
+# Complete the 'solve' function below.
+#
+# The function is expected to return an INTEGER.
+# The function accepts following parameters:
+#  1. 2D_INTEGER_ARRAY shots
+#  2. 2D_INTEGER_ARRAY players
+#
+def binrank(ll,start,end,x):       
+    if start == end:
+        return start   
+    mid = int(math.ceil((start+end)/2.))
+    if x >= ll[mid]:
+        start = mid       
+    if x < ll[mid]:
+        end = mid -1 
+    return binrank(ll,start,end,x)
+    
+
+def solve(shots, players):
+    # Write your code here
+    lshots = sorted([a[0] for a in shots])
+    rshots = sorted([a[1] for a in shots])
+    sl = len(lshots)
+    scores = []
+    for (x,y) in players:
+        if x-.5 < rshots[0]:
+            miss1 = 0
+        else:
+            miss1 = binrank(rshots,0,sl-1,x-.5) + 1
+        if y < lshots[0]:
+            miss2 = 0
+        else:            
+            miss2 = sl-1 - binrank(lshots,0,sl-1,y)
+        scores += [sl - (miss1+miss2)]
+    return sum(scores)
+
+    
+            
+if __name__ == '__main__':
+    fptr = open(os.environ['OUTPUT_PATH'], 'w')
+
+    first_multiple_input = input().rstrip().split()
+
+    n = int(first_multiple_input[0])
+
+    m = int(first_multiple_input[1])
+
+    shots = []
+
+    for _ in range(n):
+        shots.append(list(map(int, input().rstrip().split())))
+
+    players = []
+
+    for _ in range(m):
+        players.append(list(map(int, input().rstrip().split())))
+
+    result = solve(shots, players)
+
+    fptr.write(str(result) + '\n')
+
+    fptr.close()
