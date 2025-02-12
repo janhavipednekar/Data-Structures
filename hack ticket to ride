@@ -1,0 +1,211 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define sz(x) ((int) (x).size())
+#define forn(i,n) for (int i = 0; i < int(n); ++i)
+#define forab(i,a,b)for(int i =int(a);i<int(b);++i)
+
+typedef long long ll;
+typedef long double ld;
+
+const int INF = 1000001000;
+const ll INFL = 2000000000000001000;
+int solve();
+
+
+int main()
+{
+srand(2317);
+cout.precision(10);
+cout.setf(ios::fixed);
+#ifdef LOCAL
+assert(freopen("test.in", "r", stdin));
+#else
+#endif
+int tn = 1;
+for (int i = 0; i < tn; ++i)
+solve();
+#ifdef LOCAL
+cerr << "Time: " << double(clock()) / 
+CLOCKS_PER_SEC << '\n';
+#endif
+}
+
+const int maxn = 500001;
+const int maxm = 100001;
+const int maxh = 19;
+
+int ROOT;
+
+int n;
+vector<pair<int, int>> g[maxn];
+int in[maxn], out[maxn];
+int timer = 0;
+
+const int base = 1 << maxh;
+ll t[base * 2];
+ll upd[base * 2];
+
+ll get()
+{
+return t[1] + upd[1];
+}
+
+int l, r, delta;
+inline void put(int v = 1, 
+int cl = 0, int cr = base)
+{
+if (r <= cl || cr <= l)
+return;
+if (l <= cl && cr <= r)
+{
+upd[v] += delta;
+return;
+}
+int cc = (cl + cr) >> 1;
+put(v << 1, cl, cc);
+put((v << 1) + 1, cc, cr);
+t[v] = max(t[v << 1] + upd[v << 1], 
+t[(v << 1) + 1] + upd[(v << 1) + 1]);
+}
+
+inline void add(int v, ll delta)
+{
+l = in[v], r = out[v], ::delta = delta;
+put();
+}
+
+vector<pair<int, int>> up[maxn];
+vector<pair<int, int>> down[maxn];
+vector<pair<int, int>> other[maxn];
+
+inline bool is_prev(int u, int v)
+{
+return in[u] <= in[v] && out[v] <= out[u];
+}
+
+ll best = 0;
+
+void go(int u, int prev = ROOT)
+{
+for (auto p: other[u])
+add(p.first, p.second);
+for (auto p: down[u])
+{
+add(p.first, -p.second);
+upd[1] += p.second;
+}
+for (auto p: up[u])
+add(p.first, -p.second);
+best = max(best, get());
+for (auto p: g[u])
+{
+if (p.first == prev)
+continue;
+add(p.first, 2 * p.second);
+upd[1] -= p.second;
+go(p.first, u);
+add(p.first, -2 * p.second);
+upd[1] += p.second;
+}
+for (auto p: other[u])
+add(p.first, -p.second);
+for (auto p: down[u])
+{
+add(p.first, p.second);
+upd[1] -= p.second;
+}
+for (auto p: up[u])
+add(p.first, p.second);
+}
+
+pair<int, int> tickets[maxm];
+int ticket_cost[maxm];
+int visits[maxm];
+int needh[maxm];
+int step[maxm];
+vector<int> endings[maxn];
+
+int st[maxn], sc = 0;
+
+void dfs(int u, int prev = ROOT, ll depth = 0)
+{
+st[sc++] = u;
+for (int id: endings[u])
+{
+visits[id]++;
+if (visits[id] == 1)
+needh[id] = sc;
+else if (visits[id] == 2)
+step[id] = st[needh[id]];
+}
+in[u] = timer++;
+t[in[u] + base] = -depth;
+
+for (auto p: g[u])
+if (p.first != prev)
+dfs(p.first, u, depth + p.second);
+
+for (int id: endings[u])
+visits[id]--;
+out[u] = timer;
+--sc;
+}
+
+int solve()
+{
+scanf("%d", &n);
+ROOT = rand() % n;
+forn (i, n - 1)
+{
+int u, v, l;
+scanf("%d %d %d", &u, &v, &l);
+--u, --v;
+g[u].emplace_back(v, l);
+g[v].emplace_back(u, l);
+}
+int m;
+scanf("%d", &m);
+forn (i, m)
+{
+int u, v, c;
+scanf("%d %d %d", &u, &v, &c);
+--u, --v;
+endings[u].push_back(i);
+endings[v].push_back(i);
+tickets[i] = {u, v};
+ticket_cost[i] = c;
+}
+fill(step, step + m, -1);
+dfs(ROOT);
+for (int i = base - 1; i > 0; --i)
+t[i] = max(t[i * 2], t[i * 2 + 1]);
+forn (i, m)
+{
+int u = tickets[i].first;
+int v = tickets[i].second;
+int c = ticket_cost[i];
+if (is_prev(v, u))
+swap(u, v);
+if (is_prev(u, v))
+{
+assert(step[i] >= 0);
+assert(is_prev(u, step[i]));
+assert(is_prev(step[i], v));
+u = step[i];
+add(v, c);
+up[u].emplace_back(v, c);
+down[v].emplace_back(u, c);
+}
+else
+{
+other[u].emplace_back(v, c);
+other[v].emplace_back(u, c);
+}
+}
+go(ROOT);
+cout << best << '\n';
+return 0;
+}
+
