@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define sz(x) ((int) (x).size())
+#define forn(i,n) for (int i = 0; i < int(n); ++i)
+#define forab(i,a,b) for (int i = int(a); i < int(b); ++i)
+
+typedef long long ll;
+typedef long long i64;
+typedef long double ld;
+
+typedef __int128 Big;
+
+typedef pair<Big, Big> pii;
+
+const int inf = int(1e9) + int(1e5);
+const ll infl = ll(2e18) + ll(1e10);
+
+void add(pii &a, pii b) {
+    a.first += b.first, a.second += b.second;
+}
+
+const int base = 1 << 18; //135000 suka blya
+
+pii t[base * 2];
+pii upd[base * 2];
+
+pii mul(pii a, Big b) {
+    return {a.first * b, a.second * b};
+}
+
+void push(int v, int len) {
+    add(t[v * 2], mul(upd[v], len));
+    add(t[v * 2 + 1], mul(upd[v], len));
+    add(upd[v * 2], upd[v]);
+    add(upd[v * 2 + 1], upd[v]);
+    upd[v] = {Big(0), Big(0)};
+}
+
+pii get(int l, int r, int v = 1, int cl = 0, int cr = base) {
+    if (l <= cl && cr <= r)
+        return t[v];
+    if (r <= cl || cr <= l)
+        return {Big(0), Big(0)};
+    int cc = (cl + cr) / 2;
+    push(v, cr - cc);
+    pii res = get(l, r, v * 2, cl, cc);
+    add(res, get(l, r, v * 2 + 1, cc, cr));
+    return res;
+}
+
+void put(int l, int r, pii val, int v = 1, int cl = 0, int cr = base) {
+    if (l <= cl && cr <= r) {
+        add(t[v], {val.first * (cr - cl), val.second * (cr - cl)});
+        add(upd[v], val);
+        return;
+    }
+    if (r <= cl || cr <= l)
+        return;
+    int cc = (cl + cr) / 2;
+    push(v, cr - cc);
+    put(l, r, val, v * 2, cl, cc);
+    put(l, r, val, v * 2 + 1, cc, cr);
+    t[v] = t[v * 2];
+    add(t[v], t[v * 2 + 1]);
+}
+
+const int maxn = 150100;
+int arr[maxn];
+int ql[maxn], qr[maxn];
+vector<int> qu[maxn];
+Big ans[maxn];
+
+int main() {
+    cout.precision(10);
+    cout.setf(ios::fixed);
+    #ifdef LOCAL
+    assert(freopen("g.in", "r", stdin));
+    #else
+    #endif
+
+    int n, m;
+    cin >> n >> m;
+    forn (i, n)
+        scanf("%d", arr + i);
+    forn (i, m) {
+        int l, r;
+        scanf("%d%d", &l, &r);
+        --l;
+        ql[i] = l, qr[i] = r;
+        qu[ql[i]].push_back(i);
+    }
+    vector<int> st;
+    st.push_back(n);
+    int T = 0;
+    for (int L = n - 1; L >= 0; --L) {
+        while (st.size() > 1 && arr[st.back()] <= arr[L]) {
+            int ql = st.back(), qr = *prev(prev(st.end()));
+            put(ql, qr, {Big(-arr[ql]), Big(arr[ql]) * T});
+            st.pop_back();
+        }
+        st.push_back(L);
+        int ql = st.back(), qr = *prev(prev(st.end()));
+        put(ql, qr, {Big(arr[ql]), Big(-arr[ql]) * T});
+        ++T;
+
+        for (auto id: qu[L]) {
+            auto p = get(::ql[id], ::qr[id]);
+            ans[id] = p.first * T + p.second;
+        }
+    }
+
+    forn (i, m)
+        cout << (ll)ans[i] << '\n';
+
+    #ifdef LOCAL
+    cerr << "Time: " << double(clock()) / CLOCKS_PER_SEC << '\n';
+    #endif
+}
