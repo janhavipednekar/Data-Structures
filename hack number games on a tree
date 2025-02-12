@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef unsigned long long ULL;
+
+const int maxn = 1e5 + 100;
+int T, n;
+vector<pair<int, ULL>> Edge[maxn * 5];
+
+ULL Hash(ULL w){
+    return w * 747474747 + 447474747;
+}
+
+map<ULL,int>mp;
+
+void dfs(int u, int fa, ULL Ha){
+    mp[Ha]++;
+    for(int i = 0; i < Edge[u].size(); i++){
+        int v = Edge[u][i].first;
+        ULL w = Edge[u][i].second;
+        if(v == fa) continue;
+        dfs(v, u, Ha ^ w);
+    }
+}
+
+int main(){
+    scanf("%d", &T);
+    int w, u, v;
+    while(T--){
+        scanf("%d", &n);
+        mp.clear();
+        for(int i = 0; i < n; i++) Edge[i].clear();
+        for(int i = 0; i < n - 1; i++){
+            scanf("%d %d %d", &u, &v, &w);
+            u--; v--;
+            Edge[u].push_back(make_pair(v, Hash(w)));
+            Edge[v].push_back(make_pair(u, Hash(w)));
+        }
+        ULL ans = (1ULL * n * (n - 1)) / 2;
+        dfs(0, -1, 0);
+        for(map<ULL, int>::iterator it = mp.begin(); it != mp.end(); it++) {
+            ans -= (it->second * (it->second - 1)) / 2;
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}
