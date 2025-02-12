@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int Inf = 1000000007;
+const int Maxn = 100005;
+const int Maxm = 20;
+const int Maxb = 31;
+
+int n, k;
+int a[Maxn];
+int mx[Maxn][Maxm], mn[Maxn][Maxm];
+int nxt[Maxn][Maxb][2];
+int res[Maxn];
+vector <int> add[Maxn], rem[Maxn];
+map <int, int> M;
+
+int Get(int ind, int forb, int &Mn, int &Mx, int cur)
+{
+    int pnt = ind;
+    for (int i = Maxm - 1; i >= 0; i--)
+        if (pnt + (1 << i) <= forb) {
+            int candmx = max(Mx, mx[pnt][i]);
+            int candmn = min(Mn, mn[pnt][i]);
+            if (ll(cur) - ll(candmx - candmn) >= k) {
+                Mx = candmx; Mn = candmn;
+                pnt += 1 << i;
+            }
+        }
+    int res = pnt;
+    for (int i = Maxm - 1; i >= 0; i--)
+        if (pnt + (1 << i) <= forb) {
+            Mx = max(Mx, mx[pnt][i]);
+            Mn = min(Mn, mn[pnt][i]);
+            pnt += 1 << i;
+        }
+    return res;
+}
+
+int main() {
+    scanf("%d %d", &n, &k);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &a[i]);
+        mx[i][0] = mn[i][0] = a[i];   
+    }
+    for (int j = 1; j < Maxm; j++)
+        for (int i = 1; i + (1 << j) <= n + 1; i++) {
+            int nxt = i + (1 << j - 1);
+            mx[i][j] = max(mx[i][j - 1], mx[nxt][j - 1]);
+            mn[i][j] = min(mn[i][j - 1], mn[nxt][j - 1]);
+        }
+    for (int i = 0; i < Maxb; i++)
+        nxt[n + 1][i][0] = nxt[n + 1][i][1] = n + 1;
+    for (int i = n; i > 0; i--)
+        for (int j = 0; j < Maxb; j++)
+            for (int k = 0; k < 2; k++)
+                if (bool(a[i] & 1 << j) == k) nxt[i][j][k] = i;
+                else nxt[i][j][k] = nxt[i + 1][j][k];
+    for (int i = 1; i <= n; i++) {
+        int Or = a[i], And = a[i];
+        int Mn = Inf, Mx = -Inf;
+        int st = i;
+        while (st <= n) {
+            int lim = n + 1;
+            for (int j = 0; j < Maxb; j++) {
+                if (!(Or & 1 << j)) lim = min(lim, nxt[st + 1][j][1]);
+                if (And & 1 << j) lim = min(lim, nxt[st + 1][j][0]);
+            }
+            int got = Get(st, lim, Mn, Mx, Or - And);
+            if (got > st) {
+                int cand = got - i;
+                add[i].push_back(cand); rem[got].push_back(cand);
+            }
+            for (int j = 0; j < Maxb; j++) {
+                if (!(Or & 1 << j) && lim == nxt[st + 1][j][1]) Or |= 1 << j;
+                if (bool(And & 1 << j) && lim == nxt[st + 1][j][0]) And ^= 1 << j;
+            }
+            st = lim;
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        for (int j = 0; j < add[i].size(); j++)
+            M[add[i][j]]++;
+        for (int j = 0; j < rem[i].size(); j++)
+            if (--M[rem[i][j]] == 0) M.erase(rem[i][j]);
+        if (!M.empty()) {
+            map <int, int>::iterator it = M.end(); it--;
+            printf("%d\n", it->first);
+        } else printf("-1\n");
+    }
+    return 0;
+}
+
+
