@@ -1,0 +1,115 @@
+class Node(object):
+    def __init__(self, value=0, parent=None):
+        self.children=set()
+        self.parent=parent
+        self.value=value
+        self.update=set()
+    def addUpdate(self, arr):
+        self.update.add((arr[0],arr[1]))
+    def addChild(self, node):
+        self.children.add(node)
+    def setParent(self, node):
+        self.parent=node
+
+def root_path(bottom):
+    chain=[]
+    while bottom is not None:
+        chain.append(bottom)
+        bottom=bottom.parent
+    return chain
+
+def height(bottom, top):
+    res=1
+    while bottom!=top and bottom is not None:
+        bottom=bottom.parent
+        res+=1
+    return res
+
+def q2(arr, nodes):
+    a,b=arr
+    first=nodes[a-1]
+    last=nodes[b-1]
+    path=root_path(last)
+    h=height(last,first)
+    res=0
+    while len(path)>0:
+        h=min(h, len(path))
+        d=max(len(path)-h,0)
+        c=path.pop()
+        for u in c.update:
+            for i in range(h):
+                res+=(u[0] + (d+i)*u[1])%(10**9+7)
+    return res % (10**9+7)
+
+def isRootBetween(bottom, top):
+    if bottom==top:
+        return False
+    if bottom in root_path(top):
+        return False
+    if top in root_path(bottom):
+        return False
+    return True
+    
+def isDeeper(x,y):    
+    p=y
+    while p is not None:
+        if x==p:
+            return False
+        p=p.parent
+    return True
+
+def query(arr, nodes, root):    
+    a,b=arr
+    x=nodes[a-1]
+    y=nodes[b-1]
+    if a==b==root:
+        return q2([root,root], nodes)
+    if isRootBetween(x,y):
+        return (q2([root,a], nodes) \
+                +q2([root,b], nodes)\
+                -q2([root,root], nodes)) % (10**9+7)
+    elif isDeeper(x,y):
+        return q2([b,a], nodes)
+    else:
+        return q2([a,b], nodes)
+
+def update(arr, nodes):
+    node=nodes[arr[0]-1]
+    node.addUpdate(arr[1:])
+    
+line1=[int(x) for x in input().split(' ')]
+nodes=[Node() for i in range(line1[0])]
+root=line1[2]-1
+
+def add_in_dict(d,k,v):
+    if d.get(k) is None:
+        d[k]=[v]
+    else:
+        d[k]+={v}
+
+tmp=dict()
+for i in range(line1[0]-1):
+    p,c=[int(x) for x in input().split(' ')]
+    add_in_dict(tmp,p-1,c-1)
+    add_in_dict(tmp,c-1,p-1)
+visited=[]
+parents=[root]
+while len(parents)>0:
+    current=parents.pop()
+    ltmp=tmp.get(current)
+    if ltmp is not None:
+        for c in ltmp:
+            if c not in visited:
+                nodes[c].setParent(nodes[current])
+                nodes[current].addChild(nodes[c])
+                parents.append(c)
+    visited.append(current)
+        
+for i in range(line1[1]):
+    inp=input().split(' ')
+    t=inp[0]
+    integers=[int(x) for x in inp[1:]]
+    if t=='U':
+        update(integers, nodes)
+    else:
+        print(query(integers, nodes, root+1))
