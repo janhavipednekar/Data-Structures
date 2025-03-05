@@ -1,0 +1,44 @@
+from array import array
+
+f = array('i', [1])
+
+def mod_factorial(n, r):
+    if n < len(f):
+        return f[n]
+    res = f[-1]
+    for i in range(len(f), n+1):
+        res = (res*i) % r
+        f.append(res)
+    return f[-1]
+
+r = 1000003
+
+n = int(input())
+
+d = array('i')
+p = array('i')
+dp = array('i', [-1])*n
+for _ in range(n):
+    a, b, c = map(int, input().split())
+    d.append(b)
+    p.append(c)
+
+q = int(input())
+
+for _ in range(q):
+    a = input().split()
+    if a[0] == '0':
+        i, j = map(int, a[1:])
+        k = sum(p[i-1:j])
+        v = mod_factorial(k, r)
+        for m in range(i-1, j):
+            if dp[m] < 0:
+                dp[m] = pow(d[m], p[m], r)
+            v = (v * dp[m]) % r
+                
+        print(k, v)
+    else:
+        i, j, v = map(int, a[1:])
+        for k in range(i-1, j):
+            p[k] += v
+            dp[k] = -1
