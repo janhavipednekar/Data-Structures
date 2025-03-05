@@ -1,0 +1,201 @@
+import java.io.*;
+import java.util.*;
+
+public class Solution {
+
+static class Pair implements Comparable<Pair> {
+long fi;
+long se;
+
+public Pair(long fi, long se) {
+this.fi = fi;
+this.se = se;
+}
+
+@Override
+public int compareTo(Pair o) {
+if (fi != o.fi) {
+return fi > o.fi ? 1 : -1;
+}
+if (se == o.se) {
+return 0;
+}
+return se > o.se ? 1 : -1;
+}
+}
+
+static boolean[] cut;
+static int[] size;
+
+static int getSize(int v, int p) {
+size[v] = 1;
+for (int u: e[v]) {
+if (u != p && ! cut[u]) {
+size[v] += getSize(u, v);
+}
+}
+return size[v];
+}
+
+static Pair[] a;
+static List<Integer>[] e;
+static Pair[] b;
+
+static int getDist(int v, int p, int i, long hh, long vv) {
+hh += Math.abs(a[v].fi - a[p].fi);
+vv += Math.abs(a[v].se - a[p].se);
+b[i++] = new Pair(hh, vv);
+for (int u: e[v]) {
+if (u != p && ! cut[u]) {
+i = getDist(u, v, i, hh, vv);
+}
+}
+return i;
+}
+
+static public int lowerBound(long[] arr, int len, long key) {
+if (key <= arr[0]) {
+return 0;
+}
+if (key > arr[len - 1]) {
+return 0;
+}
+
+int index = Arrays.binarySearch(arr, 0, len, key);
+if (index < 0) {
+index = - index - 1;
+if (index < 0) {
+return 0;
+}
+} 
+while (index > 0 && arr[index-1] == key) {
+index--;
+}
+return index;
+}
+
+static int upperBound(long[] arr, int len, long key) {
+int index = Arrays.binarySearch(arr, 0, len, key);
+if (index < 0) {
+index = - index - 1;
+if (index < 0) {
+return 0;
+}    
+if (index >= len) {
+return len;
+}    
+}
+while (index < len && arr[index] == key) {
+index++;
+}
+return index;
+}
+
+static int[] fenwick;
+static long[] c;
+static long h;
+static long v;
+
+static long calc(int l, int r) {
+int n = r-l;
+long ret = 0;
+Arrays.sort(b, l, r);
+for (int i = l; i < r; i++) {
+c[i-l] = b[i].se;
+}
+Arrays.sort(c, 0, n);
+Arrays.fill(fenwick, 0, n, 0);
+for (int j = l, i = r; --i >= l; ) {
+for (; j < r && b[j].fi+b[i].fi <= h; j++)
+for (int x = lowerBound(c, n, b[j].se); x < n; x |= x+1) {
+fenwick[x]++;
+}
+for (int x = upperBound(c, n, v-b[i].se); x > 0; x &= x-1) {
+ret += fenwick[x-1];
+}
+}
+return ret;
+}
+
+
+static Object[] divide(int l, int v) {
+getSize(v, -1);
+int nn = size[v];
+int p = -1;
+for(;;) {
+int ch = -1;
+for (int u: e[v]) {
+if (u != p && ! cut[u] && 2*size[u] >= nn) {
+ch = u;
+break;
+}
+}
+if (ch < 0) {
+break;
+}
+p = v;
+v = ch;
+}
+cut[v] = true;
+b[l] = new Pair(0, 0);
+int i = l+1;
+long ret = 0;
+for (int u: e[v]) {
+if (! cut[u]) {
+Object[] r = divide(i, u);
+ret += (long)r[1];
+getDist(u, v, i, 0, 0);
+ret -= calc(i, (int)r[0]);
+i = (int)r[0];
+}
+}
+cut[v] = false;
+ret += calc(l, i) - 1;
+return new Object[]{i, ret};
+}
+
+
+public static void main(String[] args) 
+throws IOException {
+BufferedReader br = new BufferedReader(
+    new InputStreamReader(System.in));
+BufferedWriter bw = new BufferedWriter(
+    new FileWriter(System.getenv("OUTPUT_PATH")));
+
+StringTokenizer st = new StringTokenizer(br.readLine());
+int n = Integer.parseInt(st.nextToken());
+h = Long.parseLong(st.nextToken());
+v = Long.parseLong(st.nextToken());
+
+a = new Pair[n];
+e = new List[n];
+for (int i = 0; i < n; i++) {
+st = new StringTokenizer(br.readLine());
+long fi = Long.parseLong(st.nextToken());
+long se = Long.parseLong(st.nextToken());
+
+a[i] = new Pair(fi, se);
+e[i] = new LinkedList<>();
+}
+
+for (int i = 0; i < n - 1; i++) {
+st = new StringTokenizer(br.readLine());
+int u = Integer.parseInt(st.nextToken()) - 1;
+int v = Integer.parseInt(st.nextToken()) - 1;
+
+e[u].add(v);
+e[v].add(u);
+}
+
+cut = new boolean[n];
+size = new int[n];
+b = new Pair[n];
+fenwick = new int[n];
+c = new long[n];
+long result = (long)(n-1)*n - ((long)divide(0, 0)[1]) >> 1;
+bw.write(String.valueOf(result));
+bw.newLine();
+bw.close();
+br.close();
+}
+}
