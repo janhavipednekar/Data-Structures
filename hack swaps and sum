@@ -1,0 +1,22 @@
+def read_numbers():
+    return [int(i) for i in input().split(" ")]
+
+def swap_numbers(l,r, numbers):
+    sub = numbers[l:r]
+    for i in range(0, r-l, 2):
+        l1 = sub[i]
+        r1 = sub[i+1]
+        sub[i+1] = l1
+        sub[i] = r1
+    return sub
+n,q = read_numbers()
+numbers = read_numbers()
+results = []
+for x in range(q):
+    t,l,r = read_numbers()
+    l -= 1
+    if t == 1:
+        numbers[l:r] = swap_numbers(l,r,numbers)
+    else:
+        results.append(str(sum(numbers[l:r])))
+print("\n".join(results))
