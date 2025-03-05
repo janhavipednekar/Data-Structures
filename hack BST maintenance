@@ -1,0 +1,289 @@
+import java.io.*;
+import java.util.*;
+
+public class Solution {
+
+BufferedReader br;
+PrintWriter out;
+StringTokenizer st;
+boolean eof;
+
+static int getSize(Node v) {
+return v == null ? 0 : v.size;
+}
+
+static class Node implements Comparable<Node>
+ {
+Node left, right;
+int val;
+int depth;
+
+int size;
+
+int pathNum, inPathPos;
+
+@Override
+public int compareTo(Node o) {
+return Integer.compare(val, o.val);
+}
+
+public Node(int val) {
+this.val = val;
+}
+
+@Override
+public String toString() {
+StringBuilder sb = new StringBuilder();
+if (left != null) {
+sb.append('[');
+sb.append(left.toString());
+sb.append("] ");
+}
+sb.append(val);
+if (right != null) {
+sb.append(" [");
+sb.append(right.toString());
+sb.append(']');
+}
+return sb.toString();
+}
+}
+
+int nPaths = 0;
+List<Node> nextNode;
+int[] pathSize;
+FenwickTree[] fen;
+
+void addUptoRoot(Node v) {
+do {
+int pathNum = v.pathNum;
+int inPathPos = v.inPathPos;
+fen[pathNum].add(0, inPathPos);
+v = nextNode.get(pathNum);
+} while (v != null);
+}
+
+long getUptoRoot(Node v) {
+long ret = 0;
+do {
+int pathNum = v.pathNum;
+int inPathPos = v.inPathPos;
+ret += fen[pathNum].get(0, inPathPos);
+v = nextNode.get(pathNum);
+} while (v != null);
+return ret;
+}
+
+void solve() throws IOException {
+int n = nextInt();
+TreeSet<Node> set = new TreeSet<>();
+Node root = null;
+Node[] order = new Node[n];
+
+for (int i = 0; i < n; i++) {
+int x = nextInt();
+Node v = new Node(x);
+order[i] = v;
+set.add(v);
+if (set.size() == 1) {
+root = v;
+continue;
+}
+Node before = set.lower(v);
+Node after = set.higher(v);
+if (before != null
+&& before.right == null
+&& (after == null || 
+after.left != null || before.depth < after.depth))
+ {
+before.right = v;
+v.depth = before.depth + 1;
+} else {
+after.left = v;
+v.depth = after.depth + 1;
+}
+}
+
+dfs1(root);
+
+nextNode = new ArrayList<Node>(n);
+pathSize = new int[n];
+dfs2(root, 0, 0, null);
+
+
+
+fen = new FenwickTree[nPaths];
+for (int i = 0; i < nPaths; i++) {
+fen[i] = new FenwickTree(pathSize[i]);
+}
+
+long outp = 0;
+long sumDistRoot = 0;
+
+for (int i = 0; i < n; i++) {
+Node v = order[i];
+sumDistRoot += v.depth;
+addUptoRoot(v);
+long sum = getUptoRoot(v) - (i + 1); 
+long delta = (long) (i + 1) * v.depth - 2 * sum;
+outp += sumDistRoot + delta;
+out.println(outp);
+}
+
+}
+
+void dfs1(Node v) {
+if (v == null) {
+return;
+}
+dfs1(v.left);
+dfs1(v.right);
+v.size = getSize(v.left) + getSize(v.right) + 1;
+}
+
+void dfs2(Node v, int pathNum, int inPathPos, Node par) {
+if (v == null) {
+return;
+}
+if (inPathPos == 0) {
+pathNum = nPaths++;
+nextNode.add(par);
+}
+v.pathNum = pathNum;
+v.inPathPos = inPathPos;
+if (v.left == null && v.right == null) {
+pathSize[pathNum] = inPathPos + 1;
+return;
+}
+if (getSize(v.left) > getSize(v.right)) {
+dfs2(v.left, pathNum, inPathPos + 1, v);
+dfs2(v.right, -1, 0, v);
+} else {
+dfs2(v.right, pathNum, inPathPos + 1, v);
+dfs2(v.left, -1, 0, v);
+}
+}
+
+static class IntList {
+/**
+* Never shrinks
+*/
+
+private int[] data;
+private int size;
+
+public IntList(int cap) {
+data = new int[cap];
+size = 0;
+}
+
+void add(int x) {
+data[size++] = x;
+}
+
+void clear() {
+size = 0;
+}
+
+int get(int idx) {
+if (idx < 0 || idx >= size) {
+throw new IndexOutOfBoundsException();
+}
+return data[idx];
+}
+}
+
+static class FenwickTree {
+private int n;
+
+private long[] c0;
+private long[] c1;
+
+public FenwickTree(int n) {
+this.n = n;
+this.c0 = new long[n];
+this.c1 = new long[n];
+}
+
+void add(int low, int high) {
+/**
+* [low, high]
+*/
+internalUpdate(low, -(low - 1), 1);
+internalUpdate(high, high, -1);
+}
+
+private void internalUpdate(int x, int d0, int d1) {
+for (int i = x; i < n; i |= i + 1) {
+c0[i] += d0;
+c1[i] += d1;
+}
+}
+
+long get(int low, int high) {
+/**
+* [low, high]
+*/
+return get(high) - get(low - 1);
+}
+
+long get(int x) {
+/**
+* [0, x]
+*/
+long a1 = 0;
+long a0 = 0;
+for (int i = x; i >= 0; i = (i & (i + 1)) - 1) {
+a1 += c1[i];
+a0 += c0[i];
+}
+return a1 * x + a0;
+}
+}
+
+Solution() throws IOException {
+br = new BufferedReader(new InputStreamReader(System.in));
+out = new PrintWriter(System.out);
+solve();
+out.close();
+}
+
+public static void main(String[] args) throws IOException {
+new Solution();
+}
+
+String nextToken() {
+while (st == null || !st.hasMoreTokens()) {
+try {
+st = new StringTokenizer(br.readLine());
+} catch (Exception e) {
+eof = true;
+return null;
+}
+}
+return st.nextToken();
+}
+
+String nextString() {
+try {
+return br.readLine();
+} catch (IOException e) {
+eof = true;
+return null;
+}
+}
+
+int nextInt() throws IOException {
+return Integer.parseInt(nextToken());
+}
+
+long nextLong() throws IOException {
+return Long.parseLong(nextToken());
+}
+
+double nextDouble() throws IOException {
+return Double.parseDouble(nextToken());
+}
+}
+
+
