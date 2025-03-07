@@ -1,0 +1,543 @@
+import java.io.*;
+//import java.lang.*;
+
+import java.util.*;
+
+
+public class Solution {
+private static String inputFilename = "src/input.txt";
+private static String outputFilename = "src/output.txt";
+private BufferedReader in;
+private StringTokenizer line;
+private PrintWriter out;
+private boolean isDebug;
+
+public Solution(boolean isDebug) {
+this.isDebug = isDebug;
+}
+
+public void solve() throws IOException {
+int n = nextInt();
+int q = nextInt();
+int[] a = nextIntArray(n);
+SqrtDecomposition b = new SqrtDecomposition(a);
+for (int z = 0; z < q; z++) {
+int op = nextInt();
+int l = nextInt();
+int r = nextInt();
+if (op == 1) {
+int c = nextInt();
+b.fadd(l, r, c);
+
+
+} else if (op == 2) {
+int d = nextInt();
+b.fdiv(l, r, d);
+
+
+} else if (op == 3) {
+out.println(b.fmin(l, r));
+
+
+} else {
+out.println(b.fsum(l, r));
+}
+}
+}
+
+
+private static class MyTimer {
+private double accumulated = 0;
+private long lastTime = 0;
+
+private MyTimer() {
+reset();
+}
+
+public void reset() {
+lastTime = System.currentTimeMillis();
+}
+
+public long getMillisAndReset() {
+long current = System.currentTimeMillis();
+long result = current - lastTime;
+lastTime = current;
+return result;
+}
+
+public String getStrAndReset() {
+return String.format(Locale.ENGLISH, "%.3fs", 
+getMillisAndReset() / 1000.0);
+}
+
+public long getMillis() {
+return System.currentTimeMillis() - lastTime;
+}
+
+public void accumulateMillis() {
+accumulated += (
+System.currentTimeMillis() - lastTime) / 1000.0;
+}
+
+public String getStr() {
+return String.format(Locale.ENGLISH, "%.3fs", 
+getMillis() / 1000.0);
+}
+}
+
+private static TreeMap<String, 
+MyTimer> profiler = new TreeMap<>();
+
+{
+profiler.put("op1", new MyTimer());
+profiler.put("op2", new MyTimer());
+profiler.put("op3", new MyTimer());
+profiler.put("op4", new MyTimer());
+}
+
+private static void resetTimer(String s) {
+MyTimer t = profiler.get(s);
+if (t == null) profiler.put(s, t = new MyTimer());
+t.reset();
+}
+
+private static void accumulateTimer(String s) {
+profiler.get(s).accumulateMillis();
+}
+
+
+public void solve1() throws IOException {
+Random random = new Random(20);
+int n = 100000;//nextInt();
+int q = 100000;//nextInt();
+int[] a = new int[n];//nextIntArray(n);
+for (int i = 0; i < n; i++) {
+a[i] = random.nextInt(2000000000) - 1000000000;
+}
+resetTimer("full");
+resetTimer("createSqrt");
+SqrtDecomposition b = new SqrtDecomposition(a);
+accumulateTimer("createSqrt");
+for (int z = 0; z < q; z++) {
+int op = random.nextInt(4) + 1;//nextInt();
+int r = random.nextInt(n);//nextInt();
+int l = random.nextInt(r + 1);//nextInt();
+resetTimer("op" + op);
+if (op == 1) {
+int c = random.nextInt(20000) - 10000;//nextInt();
+b.fadd(l, r, c);
+} else if (op == 2) {
+int d = random.nextInt(5) + 2;//nextInt();
+b.fdiv(l, r, d);
+} else if (op == 3) {
+b.fmin(l, r);
+//                out.println(b.fmin(l, r));
+} else {
+b.fsum(l, r);
+//                out.println(b.fsum(l, r));
+}
+accumulateTimer("op" + op);
+}
+accumulateTimer("full");
+for (Map.Entry<String, MyTimer> e : profiler.entrySet()) {
+out.println(e.getKey() + " " + String.format(
+    Locale.ENGLISH, "%.3fs", e.getValue().accumulated));
+}
+}
+
+
+public void solve2() throws IOException {
+Random random = new Random(40);
+int n = 10;//nextInt();
+int q = 40;//nextInt();
+out.println(n + " " + q);
+int[] a = new int[n];//nextIntArray(n);
+for (int i = 0; i < n; i++) {
+a[i] = random.nextInt(30) - 15;
+}
+out.println(Arrays.toString(a));
+SqrtDecomposition b = new SqrtDecomposition(a);
+for (int z = 0; z < q; z++) {
+int op = random.nextInt(4) + 1;//nextInt();
+int r = random.nextInt(n);//nextInt();
+int l = random.nextInt(r + 1);//nextInt();
+out.print(op + " " + l + " " + r + " ");
+if (op == 1) {
+int c = random.nextInt(30) - 15;//nextInt();
+out.print(c + " ");
+b.fadd(l, r, c);
+
+for (int j = l; j <= r; j++) {
+a[j] += c;
+}
+} else if (op == 2) {
+int d = random.nextInt(5) + 2;//nextInt();
+out.print(d + " ");
+b.fdiv(l, r, d);
+
+for (int j = l; j <= r; j++) {
+a[j] = a[j] / d + (a[j] % d < 0 ? -1 : 0);
+}
+} else if (op == 3) {
+long res1 = b.fmin(l, r);
+
+long res2 = a[l];
+for (int j = l; j <= r; j++) {
+res2 = Math.min(res2, a[j]);
+}
+out.print(" ================= " + res1 + " " + res2 + " ");
+if (res1 != res2) {
+out.print("!!!!!!!!!!!!");
+}
+} else {
+long res1 = b.fsum(l, r);
+
+long res2 = 0;
+for (int j = l; j <= r; j++) {
+res2 += a[j];
+}
+out.print(" ================= " + res1 + " " + res2 + " ");
+if (res1 != res2) {
+out.print("!!!!!!!!!!!!");
+}
+}
+out.println();
+}
+}
+
+private static int div(int a, int b) {
+return a / b + (a % b < 0 ? -1 : 0);
+}
+
+private static class MyInteger implements Comparable<MyInteger> 
+{
+private int value;
+
+public MyInteger(int value) {
+this.value = value;
+}
+
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (o == null || getClass() != o.getClass()) 
+return false;
+
+MyInteger myInteger = (MyInteger) o;
+
+return value == myInteger.value;
+
+}
+
+@Override
+public int hashCode() {
+return value;
+}
+
+@Override
+public String toString() {
+return "" + value;
+}
+
+@Override
+public int compareTo(MyInteger o) {
+return value - o.value;
+}
+}
+
+private static void add(Map<MyInteger, 
+IntList> a, int v0, int idx0) {
+MyInteger v = new MyInteger(v0);
+IntList t = a.get(v);
+if (t == null) {
+a.put(v, t = new IntList());
+}
+t.add(idx0);
+}
+
+private static class IntList {
+private int[] a;
+private int n;
+
+public IntList() {
+n = 0;
+a = new int[1];
+}
+
+public void add(int value) {
+if (n == a.length) {
+int newSize = a.length + 5;
+newSize = newSize * 5 / 4;
+a = Arrays.copyOf(a, newSize);
+}
+a[n++] = value;
+}
+
+public void addAll(IntList list) {
+if (n + list.n > a.length) {
+a = Arrays.copyOf(a, a.length + list.a.length);
+}
+System.arraycopy(list.a, 0, a, n, list.n);
+n += list.n;
+}
+
+public static IntList create(int value) {
+IntList res = new IntList();
+res.add(value);
+return res;
+}
+}
+
+private static class SqrtDecomposition {
+private int n;
+private int len;
+private int[] a;
+private int[] add;
+private int[] min;
+private long[] sum;
+private Map<MyInteger, IntList>[] nums;
+
+public SqrtDecomposition(int[] b) {
+n = b.length;
+len = Math.max(1, (int) Math.sqrt(n));
+a = Arrays.copyOf(b, n);
+int sz = n / len + (n % len == 0 ? 0 : 1);
+add = new int[sz];
+min = new int[sz];
+nums = new Map[sz];
+for (int i = 0; i < sz; i++) {
+min[i] = Integer.MAX_VALUE;
+}
+sum = new long[sz];
+for (int i = 0; i < n; i++) {
+int j = i / len;
+min[j] = Math.min(min[j], a[i]);
+sum[j] += a[i];
+}
+}
+
+private void push(int x) {
+if (nums[x] == null) {
+if (add[x] != 0) {
+for (int i = x * len, to = Math.min(n,
+ (x + 1) * len); i < to; i++) {
+a[i] += add[x];
+}
+}
+} else {
+for (Map.Entry<MyInteger, IntList> e : nums[x].entrySet()) {
+int value = e.getKey().value + add[x];
+IntList t = e.getValue();
+for (int i = 0; i < t.n; i++) {
+a[t.a[i]] = value;
+}
+}
+}
+add[x] = 0;
+nums[x] = null;
+}
+
+public void fadd(int l, int r, int value) {
+int cl = l / len;
+int cr = r / len;
+if (cl == cr) {
+if (l % len == 0 && (r + 1) % len == 0) {
+add[cl] += value;
+min[cl] += value;
+sum[cl] += len * (long) value;
+} else {
+push(cl);
+sum[cl] += (r - l + 1) * (long) value;
+for (int i = l; i <= r; i++) {
+a[i] += value;
+}
+min[cl] = Integer.MAX_VALUE;
+for (int i = cl * len, to = Math.min(n, 
+(cl + 1) * len); i < to; i++) {
+min[cl] = Math.min(min[cl], a[i]);
+}
+}
+} else {
+fadd(l, (cl + 1) * len - 1, value);
+for (int i = cl + 1; i < cr; i++) {
+fadd(i * len, (i + 1) * len - 1, value);
+}
+fadd(cr * len, r, value);
+}
+}
+
+public void fdiv(int l, int r, int value) {
+int cl = l / len;
+int cr = r / len;
+if (cl == cr) {
+if (l % len == 0 && (r + 1) % len == 0) {
+min[cl] = div(min[cl], value);
+
+Map<MyInteger, IntList> tmp = new TreeMap<>();
+sum[cl] = 0;
+if (nums[cl] != null) {
+for (Map.Entry<MyInteger, IntList> e : nums[cl].entrySet()) {
+MyInteger v = new MyInteger(div(
+    e.getKey().value + add[cl], value));
+sum[cl] += e.getValue().n * (long) v.value;
+IntList t = tmp.get(v);
+if (t == null) {
+    tmp.put(v, e.getValue());
+} else {
+    if (t.n > e.getValue().n) {
+        t.addAll(e.getValue());
+    } else {
+        e.getValue().addAll(t);
+        tmp.put(v, e.getValue());
+    }
+}
+}
+} else {
+for (int i = cl * len, to = Math.min(n,
+ (cl + 1) * len); i < to; i++) {
+MyInteger v = new MyInteger(
+    div(a[i] + add[cl], value));
+sum[cl] += v.value;
+add(tmp, v.value, i);
+}
+}
+nums[cl] = tmp;
+add[cl] = 0;
+} else {
+push(cl);
+for (int i = l; i <= r; i++) {
+a[i] = div(a[i], value);
+}
+sum[cl] = 0;
+min[cl] = Integer.MAX_VALUE;
+for (int i = cl * len, to = Math.min(
+    n, (cl + 1) * len); i < to; i++) {
+min[cl] = Math.min(min[cl], a[i]);
+sum[cl] += a[i];
+}
+}
+} else {
+fdiv(l, (cl + 1) * len - 1, value);
+for (int i = cl + 1; i < cr; i++) {
+fdiv(i * len, (i + 1) * len - 1, value);
+}
+fdiv(cr * len, r, value);
+}
+}
+
+public int fmin(int l, int r) {
+int cl = l / len;
+int cr = r / len;
+push(cl);
+push(cr);
+int res = Integer.MAX_VALUE;
+if (cl == cr) {
+for (int i = l; i <= r; i++) {
+res = Math.min(res, a[i]);
+}
+} else {
+for (int i = l, to = (cl + 1) * len; i < to; i++) {
+res = Math.min(res, a[i]);
+}
+for (int i = cl + 1; i < cr; i++) {
+res = Math.min(res, min[i]);
+}
+for (int i = cr * len; i <= r; i++) {
+res = Math.min(res, a[i]);
+}
+}
+return res;
+}
+
+public long fsum(int l, int r) {
+int cl = l / len;
+int cr = r / len;
+push(cl);
+push(cr);
+long res = 0;
+if (cl == cr) {
+for (int i = l; i <= r; i++) {
+res += a[i];
+}
+} else {
+for (int i = l, to = (cl + 1) * len; i < to; i++) {
+res += a[i];
+}
+for (int i = cl + 1; i < cr; i++) {
+res += sum[i];
+}
+for (int i = cr * len; i <= r; i++) {
+res += a[i];
+}
+}
+return res;
+}
+}
+
+public static void main(String[] args) 
+throws IOException {
+new Solution(Arrays.asList(args).contains(
+    "DEBUG_MODE")).run(args);
+}
+
+public void run(String[] args) throws IOException {
+if (isDebug) {
+in = new BufferedReader(
+    new InputStreamReader(
+        new FileInputStream(inputFilename)));
+//            in = new BufferedReader(new InputStreamReader(System.in));
+} else {
+in = new BufferedReader(new InputStreamReader(System.in));
+}
+out = new PrintWriter(System.out);
+//        out = new PrintWriter(outputFilename);
+
+//        int t = nextInt();
+int t = 1;
+for (int i = 0; i < t; i++) {
+//            out.print("Case #" + (i + 1) + ": ");
+solve();
+}
+
+in.close();
+out.flush();
+out.close();
+}
+
+private int[] nextIntArray(int n) 
+throws IOException {
+int[] res = new int[n];
+for (int i = 0; i < n; i++) {
+res[i] = nextInt();
+}
+return res;
+}
+
+private long[] nextLongArray(int n)
+ throws IOException {
+long[] res = new long[n];
+for (int i = 0; i < n; i++) {
+res[i] = nextInt();
+}
+return res;
+}
+
+private int nextInt() throws IOException {
+return Integer.parseInt(nextToken());
+}
+
+private long nextLong() throws IOException {
+return Long.parseLong(nextToken());
+}
+
+private double nextDouble() throws IOException {
+return Double.parseDouble(nextToken());
+}
+
+private String nextToken() throws IOException {
+while (line == null || !line.hasMoreTokens()) {
+line = new StringTokenizer(in.readLine());
+}
+return line.nextToken();
+}
+}
