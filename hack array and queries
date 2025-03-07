@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+long int mod=1000000007 ;
+int main(){
+    int n;
+    cin>>n;
+    multiset<int> set1;
+    int arr[n];
+    for(int i=0;i<n;i++){
+        cin>>arr[i];
+        set1.insert(arr[i]);
+    }
+    multiset<int> set2=set1;
+    int count=0;
+    while(set2.size()){
+        count++;
+        int cur=*(set2.begin());
+        set2.erase(set2.find(cur));
+        while((set2.find(cur+1))!=set2.end()){
+            cur++;
+            set2.erase(set2.find(cur));
+        }
+    }
+   long long int q;
+    cin>>q;
+    long long int ans=0;
+    for(long long int i=0;i<q;i++){
+        int id,val;
+        cin>>id>>val;
+        id--;
+        int curr=set1.count(arr[id]);
+        int prev=set1.count(arr[id]-1);
+          int next=set1.count(arr[id]+1);
+          //cout<<'\t'<<curr<<'\t'<<prev<<'\t'<<next<<'\n';
+          if(prev==0 && next==0)
+          count--;
+          else if(curr>max(prev,next))
+          count--;
+          else if(curr<=min(prev,next))
+          count++;
+          set1.erase(set1.find(arr[id]));
+          arr[id]=val;
+          curr=set1.count(arr[id]);
+          prev=set1.count(arr[id]-1);
+          next=set1.count(arr[id]+1);
+          //cout<<'\t'<<curr<<'\t'<<prev<<'\t'<<next<<'\n';
+         if(prev==0 && next==0)
+          count++;
+           else if((curr+1)>max(prev,next))
+          count++;
+           else if((curr+1)<=min(prev,next))
+          count--;
+          set1.insert(val);
+          ans=(ans+((i+1)*(count))%mod)%mod;
+    }
+    cout<<ans;
+    return 0;
+}
+                    
