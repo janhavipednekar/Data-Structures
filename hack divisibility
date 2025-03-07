@@ -1,0 +1,315 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#define HASH_SIZE 123455
+typedef struct _node{
+int x;
+int c;
+struct _node *next;
+} node;
+void QQ(int x,int y);
+void add_left(int X);
+void add_right(int X);
+void remove_left(int X);
+void remove_right(int X);
+void sort_a3(int*a,int*b,int*c,int size);
+void merge3(int*a,int*left_a,int*right_a,int*b,
+int*left_b,int*right_b,int*c,int*left_c,int*right_c,
+int left_size,int right_size);
+void insert(node **hash,int x);
+void removee(node **hash,int x);
+int count(node **hash,int x);
+node *get();
+void free_node(node *x);
+char S[100001];
+int cl,cr,a[100001],q1[100000],q2[100000],
+y[100000],idx[100000],g1[100000][30],g2[100000]={0},
+g3[100000][30],x;
+long long ans[100000],tans;
+node *hash1[HASH_SIZE]={0},*hash2[HASH_SIZE]={0},
+pool[200000],*pool_head;
+
+int main(){
+int P,Q,N,P1,i,j;
+long long t,t1;
+for(i=0;i<200000;i++)
+if(i!=200000-1)
+pool[i].next=&pool[i+1];
+else
+pool[i].next=NULL;
+pool_head=pool;
+scanf("%d%d%s",&P,&Q,S);
+N=strlen(S);
+for(i=0;i<Q;i++){
+scanf("%d%d",q1+i,q2+i);
+q1[i]--;
+q2[i]--;
+}
+for(i=0,x=(int)sqrt(N);i<Q;i++){
+a[i]=q1[i]/x;
+y[i]=q2[i];
+idx[i]=i;
+}
+sort_a3(a,y,idx,Q);
+for(x=0,P1=1;P%2==0;){
+P/=2;
+P1*=2;
+x++;
+}
+for(t=0;P%5==0;){
+P/=5;
+P1*=5;
+t++;
+}
+x=(x>t)?x:t;
+for(i=N-1,t=1;i>=0;i--,t=t*10%P)
+if(i==N-1)
+a[i]=(S[i]-'0')%P;
+else
+a[i]=(a[i+1]+(S[i]-'0')*t)%P;
+a[N]=0;
+if(!x)
+for(i=0;i<N;i++)
+g2[i]=1;
+else{
+for(i=0;i<N;i++)
+for(t=0,t1=1,j=0;j<x && i-j>=0;j++,t1*=10){
+t=t+(S[i-j]-'0')*t1;
+if(!j)
+if(t%(P1*P)==0)
+g1[i][j]=1;
+else
+g1[i][j]=0;
+else
+if(t%(P1*P)==0)
+g1[i][j]=g1[i][j-1]+1;
+else
+g1[i][j]=g1[i][j-1];
+}
+for(i=x-1;i<N;i++){
+for(t=0,j=i-x+1;j<i+1;j++)
+t=t*10+S[j]-'0';
+if(t%P1==0)
+g2[i]=1;
+}
+for(i=0;i<N;i++)
+for(t=0,j=0;j<x && i+j<N;j++){
+t=t*10+(S[i+j]-'0');
+if(!j)
+if(t%(P1*P)==0)
+g3[i][j]=1;
+else
+g3[i][j]=0;
+else
+if(t%(P1*P)==0)
+g3[i][j]=g3[i][j-1]+1;
+else
+g3[i][j]=g3[i][j-1];
+}
+}
+for(i=cl=cr=0,tans=0;i<Q;i++){
+QQ(q1[idx[i]],q2[idx[i]]);
+ans[idx[i]]=tans;
+}
+for(i=0;i<Q;i++)
+printf("%lld\n",ans[i]);
+return 0;
+}
+void QQ(int x,int y){
+while(cl<x)
+remove_left(cl++);
+while(cl>x)
+add_left(--cl);
+while(cr<y+1)
+add_right(cr++);
+while(cr>y+1)
+remove_right(--cr);
+return;
+}
+void add_left(int X){
+if(X>=cr)
+return;
+if(X+x<cr){
+insert(hash1,a[X]);
+if(g2[X+x])
+insert(hash2,a[X+x+1]);
+tans+=count(hash2,a[X]);
+if(x)
+tans+=g3[X][x-1];
+}
+else
+tans+=g3[X][cr-X-1];
+return;
+}
+void add_right(int X){
+if(X<cl)
+return;
+if(X-x>=cl){
+insert(hash1,a[X-x]);
+if(g2[X]){
+insert(hash2,a[X+1]);
+tans+=count(hash1,a[X+1]);
+}
+if(x)
+tans+=g1[X][x-1];
+}
+else
+tans+=g1[X][X-cl];
+return;
+}
+void remove_left(int X){
+if(X>=cr)
+return;
+if(X+x<cr){
+removee(hash1,a[X]);
+tans-=count(hash2,a[X]);
+if(g2[X+x])
+removee(hash2,a[X+x+1]);
+if(x)
+tans-=g3[X][x-1];
+}
+else
+tans-=g3[X][cr-X-1];
+return;
+}
+void remove_right(int X){
+if(X<cl)
+return;
+if(X-x>=cl){
+if(g2[X]){
+tans-=count(hash1,a[X+1]);
+removee(hash2,a[X+1]);
+}
+if(x)
+tans-=g1[X][x-1];
+removee(hash1,a[X-x]);
+}
+else
+tans-=g1[X][X-cl];
+return;
+}
+void sort_a3(int*a,int*b,int*c,int size){
+if (size < 2)
+return;
+int m = (size+1)/2,i;
+int *left_a,*left_b,*left_c,*right_a,*right_b,*right_c;
+left_a=(int*)malloc(m*sizeof(int));
+right_a=(int*)malloc((size-m)*sizeof(int));
+left_b=(int*)malloc(m*sizeof(int));
+right_b=(int*)malloc((size-m)*sizeof(int));
+left_c=(int*)malloc(m*sizeof(int));
+right_c=(int*)malloc((size-m)*sizeof(int));
+for(i=0;i<m;i++){
+left_a[i]=a[i];
+left_b[i]=b[i];
+left_c[i]=c[i];
+}
+for(i=0;i<size-m;i++){
+right_a[i]=a[i+m];
+right_b[i]=b[i+m];
+right_c[i]=c[i+m];
+}
+sort_a3(left_a,left_b,left_c,m);
+sort_a3(right_a,right_b,right_c,size-m);
+merge3(a,left_a,right_a,b,left_b,right_b,c,
+left_c,right_c,m,size-m);
+free(left_a);
+free(right_a);
+free(left_b);
+free(right_b);
+free(left_c);
+free(right_c);
+return;
+}
+void merge3(int*a,int*left_a,int*right_a,
+int*b,int*left_b,int*right_b,int*c,
+int*left_c,int*right_c,int left_size,
+int right_size){
+int i = 0, j = 0;
+while (i < left_size|| j < right_size) {
+if (i == left_size) {
+a[i+j] = right_a[j];
+b[i+j] = right_b[j];
+c[i+j] = right_c[j];
+j++;
+} else if (j == right_size) {
+a[i+j] = left_a[i];
+b[i+j] = left_b[i];
+c[i+j] = left_c[i];
+i++;
+} else if (left_a[i] == right_a[j]) {
+if(left_b[i]<=right_b[j]){
+a[i+j] = left_a[i];
+b[i+j] = left_b[i];
+c[i+j] = left_c[i];
+i++;
+}
+else{
+a[i+j] = right_a[j];
+b[i+j] = right_b[j];
+c[i+j] = right_c[j];
+j++;
+}
+} else if (left_a[i] < right_a[j]) {
+a[i+j] = left_a[i];
+b[i+j] = left_b[i];
+c[i+j] = left_c[i];
+i++;
+} else {
+a[i+j] = right_a[j];
+b[i+j] = right_b[j];
+c[i+j] = right_c[j];
+j++;
+}
+}
+return;
+}
+void insert(node **hash,int x){
+node *t=hash[x%HASH_SIZE];
+while(t){
+if(t->x==x){
+t->c++;
+return;
+}
+t=t->next;
+}
+t=get();
+t->x=x;
+t->c=1;
+t->next=hash[x%HASH_SIZE];
+hash[x%HASH_SIZE]=t;
+return;
+}
+void removee(node **hash,int x){
+node *t=hash[x%HASH_SIZE],*p=NULL;
+while(t){
+if(t->x==x){
+t->c--;
+return;
+}
+p=t;
+t=t->next;
+}
+return;
+}
+int count(node **hash,int x){
+node *t=hash[x%HASH_SIZE];
+while(t){
+if(t->x==x)
+return t->c;
+t=t->next;
+}
+return 0;
+}
+node *get(){
+node *res=pool_head;
+if(pool_head)
+pool_head=pool_head->next;
+return res;
+}
+void free_node(node *x){
+x->next=pool_head;
+pool_head=x;
+return;
+}
